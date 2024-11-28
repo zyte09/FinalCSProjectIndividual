@@ -73,7 +73,7 @@ Partial Class LoginForm
         ' 
         txtbox_password.Location = New Point(241, 147)
         txtbox_password.Name = "txtbox_password"
-        txtbox_password.PasswordChar = "*"c
+        txtbox_password.PasswordChar = "•"c
         txtbox_password.Size = New Size(186, 27)
         txtbox_password.TabIndex = 4
         ' 
