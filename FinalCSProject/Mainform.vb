@@ -1,4 +1,5 @@
-﻿Imports System.Windows.Markup
+﻿Imports System.Windows.Forms.DataVisualization.Charting
+Imports System.Windows.Markup
 Imports MySql.Data.MySqlClient
 
 Public Class Mainform
@@ -9,6 +10,7 @@ Public Class Mainform
 
     Private Sub btn_logout_Click(sender As Object, e As EventArgs) Handles btn_logout.Click
         LoginForm.Show()
+        Me.Hide()
         Close()
     End Sub
 
@@ -188,22 +190,72 @@ Public Class Mainform
         End Try
     End Sub
 
-    Private Sub DataGridView1_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellContentClick
-        If e.RowIndex >= 0 Then
-            Dim row As DataGridViewRow
-            row = Me.DataGridView1.Rows(e.RowIndex)
-            ID_text.Text = row.Cells("id").Value.ToString
-            name_text.Text = row.Cells("name").Value.ToString
-            surname_text.Text = row.Cells("surname").Value.ToString
-            age_text.Text = row.Cells("age").Value.ToString
+    Private Sub DataGridView1_SelectionChanged(sender As Object, e As EventArgs) Handles DataGridView1.SelectionChanged
+        If DataGridView1.SelectedRows.Count > 0 Then
+            Dim row As DataGridViewRow = DataGridView1.SelectedRows(0)
+
+            If DataGridView1.Columns.Contains("Employee ID") Then
+                ID_text.Text = row.Cells("Employee ID").Value.ToString()
+            Else
+                ID_text.Text = "default_id"
+            End If
+
+            If DataGridView1.Columns.Contains("First Name") Then
+                name_text.Text = row.Cells("First Name").Value.ToString()
+            Else
+                name_text.Text = "default_name"
+            End If
+
+            If DataGridView1.Columns.Contains("Last Name") Then
+                surname_text.Text = row.Cells("Last Name").Value.ToString()
+            Else
+                surname_text.Text = "default_surname"
+            End If
+
+            If DataGridView1.Columns.Contains("Age") Then
+                age_text.Text = row.Cells("Age").Value.ToString()
+            Else
+                age_text.Text = "default_age"
+            End If
         End If
     End Sub
 
     Private Sub search_txt_TextChanged(sender As Object, e As EventArgs) Handles search_txt.TextChanged
-        Dim DV As New DataView(dbDataSet)
-        DV.RowFilter = String.Format("name LIKE '%{0}%'", search_txt.Text)
-        DataGridView1.DataSource = DV
+        Dim filter As String = String.Empty
+        Dim searchValue As String = search_txt.Text
 
+        If dbDataSet.Columns.Contains("First Name") Then
+            filter &= String.Format("[First Name] LIKE '%{0}%'", searchValue)
+        End If
+
+        If dbDataSet.Columns.Contains("Last Name") Then
+            If Not String.IsNullOrEmpty(filter) Then
+                filter &= " OR "
+            End If
+            filter &= String.Format("[Last Name] LIKE '%{0}%'", searchValue)
+        End If
+
+        If dbDataSet.Columns.Contains("Age") Then
+            If Not String.IsNullOrEmpty(filter) Then
+                filter &= " OR "
+            End If
+            filter &= String.Format("CONVERT([Age], 'System.String') LIKE '%{0}%'", searchValue)
+        End If
+
+        If dbDataSet.Columns.Contains("Employee ID") Then
+            If Not String.IsNullOrEmpty(filter) Then
+                filter &= " OR "
+            End If
+            filter &= String.Format("CONVERT([Employee ID], 'System.String') LIKE '%{0}%'", searchValue)
+        End If
+
+        If Not String.IsNullOrEmpty(filter) Then
+            Dim DV As New DataView(dbDataSet)
+            DV.RowFilter = filter
+            DataGridView1.DataSource = DV
+        Else
+            MessageBox.Show("No searchable columns found.")
+        End If
     End Sub
 
     Private Sub Mainform_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
@@ -222,5 +274,35 @@ Public Class Mainform
 
     Private Sub rd_female_CheckedChanged(sender As Object, e As EventArgs) Handles rd_female.CheckedChanged
         gender = "Female"
+    End Sub
+
+    Private Sub rd_other_CheckedChanged(sender As Object, e As EventArgs) Handles rd_other.CheckedChanged
+        gender = "Other"
+    End Sub
+
+    Private Sub btn_loadchart_Click(sender As Object, e As EventArgs) Handles btn_loadchart.Click
+        conn = New MySqlConnection
+        conn.ConnectionString = "server=127.0.0.1;userid=root;password='';database=FinalCSProject"
+        Try
+            conn.Open()
+            Dim Query As String
+            Query = "SELECT ID, age FROM data"
+            COMMAND = New MySqlCommand(Query, conn)
+            Dim READER As MySqlDataReader = COMMAND.ExecuteReader
+
+            Chart1.Series.Clear()
+            Dim series As New Series("ID_VS_AGE")
+
+            While READER.Read
+                series.Points.AddXY(READER.GetInt32("ID"), READER.GetInt32("age"))
+            End While
+
+            Chart1.Series.Add(series)
+            conn.Close()
+        Catch ex As Exception
+            MsgBox(ex.Message)
+        Finally
+            conn.Close()
+        End Try
     End Sub
 End Class

@@ -34,7 +34,7 @@ Public Class LoginForm
             If count = 1 Then
                 MessageBox.Show("Login successful!")
                 Mainform.Show()
-                Me.Hide()
+                Hide()
             ElseIf count > 1 Then
                 MessageBox.Show("Username and password are duplicate!")
             Else
@@ -48,4 +48,9 @@ Public Class LoginForm
         End Try
     End Sub
 
+    Private Sub btn_signup_Click(sender As Object, e As EventArgs) Handles btn_signup.Click
+        Dim signUpForm As New SignUpForm()
+        signUpForm.Show()
+        Me.Hide()
+    End Sub
 End Class
